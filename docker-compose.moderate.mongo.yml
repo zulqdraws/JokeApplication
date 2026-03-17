@@ -1,18 +1,17 @@
 services:
   moderate-service:
-    build:
-      context: ./moderate-service
+    image: ${MODERATE_IMAGE}
     container_name: moderate_service
     restart: always
     environment:
-      MODERATE_SERVICE_PORT: 3100
-      TYPES_CACHE_FILE: /app/cache/types-cache.json
-      INITIAL_TYPES_FILE: /app/defaults/types-cache.json
-      RABBITMQ_URL: amqp://10.10.1.30:5672
-      SUBMIT_QUEUE: submit
-      MODERATED_QUEUE: moderated
-      TYPE_UPDATE_EXCHANGE: type_update
-      MOD_TYPE_UPDATE_QUEUE: mod_type_update
+      MODERATE_SERVICE_PORT: ${MODERATE_SERVICE_PORT}
+      TYPES_CACHE_FILE: ${TYPES_CACHE_FILE}
+      INITIAL_TYPES_FILE: ${INITIAL_TYPES_FILE}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      SUBMIT_QUEUE: ${SUBMIT_QUEUE}
+      MODERATED_QUEUE: ${MODERATED_QUEUE}
+      TYPE_UPDATE_EXCHANGE: ${TYPE_UPDATE_EXCHANGE}
+      MOD_TYPE_UPDATE_QUEUE: ${MOD_TYPE_UPDATE_QUEUE}
     volumes:
       - moderate_cache:/app/cache
     ports:
