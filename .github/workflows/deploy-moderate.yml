@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - "moderate-service/**"
-      - "docker-compose.moderate.mongo.deploy.yml"
+      - "docker-compose.moderate.mongo.yml"
       - "deploy/deploy-moderate.sh"
       - ".github/workflows/deploy-moderate.yml"
   workflow_dispatch:
@@ -70,7 +70,7 @@ jobs:
 
       - name: Copy deployment files to Moderate VM
         run: |
-          scp docker-compose.moderate.mongo.deploy.yml moderate-vm:/home/azureuser/jokes-app/
+          scp docker-compose.moderate.mongo.yml moderate-vm:/home/azureuser/jokes-app/
           scp deploy/deploy-moderate.sh moderate-vm:/home/azureuser/jokes-app/
 
       - name: Run deployment on Moderate VM

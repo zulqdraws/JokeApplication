@@ -21,8 +21,8 @@ EOF
 
 echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
 
-docker compose --env-file .env.deploy -f docker-compose.moderate.mongo.deploy.yml pull
-docker compose --env-file .env.deploy -f docker-compose.moderate.mongo.deploy.yml up -d
+docker compose --env-file .env.deploy -f docker-compose.moderate.mongo.yml pull
+docker compose --env-file .env.deploy -f docker-compose.moderate.mongo.yml up -d
 
 docker image prune -af --filter "until=168h" || true
 
