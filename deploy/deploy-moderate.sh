@@ -27,4 +27,4 @@ docker compose --env-file .env.deploy -f docker-compose.moderate.mongo.yml up -d
 docker image prune -af --filter "until=168h" || true
 
 docker ps
-docker compose --env-file .env.deploy -f docker-compose.moderate.mongo.deploy.yml logs --tail=50
+docker compose --env-file .env.deploy -f docker-compose.moderate.mongo.yml logs --tail=50
