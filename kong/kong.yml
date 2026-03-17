@@ -3,7 +3,7 @@ _transform: true
 
 services:
   - name: joke-api
-    url: http://joke-service:3000
+    url: http://10.10.1.20:3000
     routes:
       - name: joke-types
         paths:
@@ -30,7 +30,7 @@ services:
               policy: local
 
   - name: joke-ui
-    url: http://joke-service:3000/
+    url: http://10.10.1.20:3000/
     routes:
       - name: joke-ui-route
         paths:
@@ -40,7 +40,7 @@ services:
         strip_path: true
 
   - name: submit-api
-    url: http://submit-service:3200
+    url: http://10.30.1.20:3200
     routes:
       - name: submit-post
         paths:
@@ -50,7 +50,7 @@ services:
         strip_path: false
 
   - name: submit-types
-    url: http://submit-service:3200/types
+    url: http://10.30.1.20:3200/types
     routes:
       - name: submit-types-route
         paths:
@@ -60,7 +60,7 @@ services:
         strip_path: true
 
   - name: submit-docs
-    url: http://submit-service:3200
+    url: http://10.30.1.20:3200
     routes:
       - name: submit-docs-route
         paths:
@@ -70,7 +70,7 @@ services:
         strip_path: false
 
   - name: submit-ui
-    url: http://submit-service:3200/
+    url: http://10.30.1.20:3200/
     routes:
       - name: submit-ui-route
         paths:
@@ -80,7 +80,7 @@ services:
         strip_path: true
 
   - name: moderate-api
-    url: http://moderate-service:3100
+    url: http://10.30.1.30:3100
     routes:
       - name: moderate-get
         paths:
@@ -97,7 +97,7 @@ services:
         strip_path: false
 
   - name: moderate-types
-    url: http://moderate-service:3100/types
+    url: http://10.30.1.30:3100/types
     routes:
       - name: moderate-types-route
         paths:
@@ -107,7 +107,7 @@ services:
         strip_path: true
 
   - name: moderate-ui
-    url: http://moderate-service:3100/
+    url: http://10.30.1.30:3100/
     routes:
       - name: moderate-ui-route
         paths:

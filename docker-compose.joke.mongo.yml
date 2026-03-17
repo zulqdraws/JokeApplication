@@ -1,0 +1,56 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: jokes_mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo-init/seed.js:/docker-entrypoint-initdb.d/seed.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  joke-service:
+    build:
+      context: .
+      dockerfile: ./joke-service/Dockerfile
+    container_name: joke_service
+    restart: always
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      JOKE_SERVICE_DB_ENGINE: MONGO
+      JOKE_SERVICE_MONGO_URL: mongodb://mongo:27017
+      JOKE_SERVICE_MONGO_DB_NAME: jokes_db
+      JOKE_SERVICE_PORT: 3000
+    ports:
+      - "3000:3000"
+
+  etl-service:
+    build:
+      context: .
+      dockerfile: ./etl-service/Dockerfile
+    container_name: etl_service
+    restart: always
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      ETL_SERVICE_DB_ENGINE: MONGO
+      ETL_SERVICE_PORT: 3001
+      ETL_SERVICE_MONGO_URL: mongodb://mongo:27017
+      ETL_SERVICE_MONGO_DB_NAME: jokes_db
+      ETL_SERVICE_RABBITMQ_URL: amqp://10.10.1.30:5672
+      ETL_SERVICE_MODERATED_QUEUE: moderated
+      ETL_SERVICE_TYPE_UPDATE_EXCHANGE: type_update
+    ports:
+      - "3001:3001"
+
+volumes:
+  mongo_data:

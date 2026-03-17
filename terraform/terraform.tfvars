@@ -3,7 +3,7 @@ resource_group_name     = "jokes-assignment-rg"
 resource_group_location = "centralindia"
 
 admin_username      = "azureuser"
-ssh_public_key_path = "C:/Users/ZAFARULLAH/.ssh/id_rsa.pub"
+ssh_public_key_path = "C:/Users/zulqd/.ssh/id_rsa.pub"
 kong_dns_label      = "zulq-jokes-kong"
 
 indonesia_location = "southeastasia"

@@ -1,0 +1,23 @@
+services:
+  moderate-service:
+    build:
+      context: .
+      dockerfile: ./moderate-service/Dockerfile
+    container_name: moderate_service
+    restart: always
+    environment:
+      MODERATE_SERVICE_PORT: 3100
+      TYPES_CACHE_FILE: /app/cache/types-cache.json
+      INITIAL_TYPES_FILE: /app/defaults/types-cache.json
+      RABBITMQ_URL: amqp://10.10.1.30:5672
+      SUBMIT_QUEUE: submit
+      MODERATED_QUEUE: moderated
+      TYPE_UPDATE_EXCHANGE: type_update
+      MOD_TYPE_UPDATE_QUEUE: mod_type_update
+    volumes:
+      - moderate_cache:/app/cache
+    ports:
+      - "3100:3100"
+
+volumes:
+  moderate_cache:
