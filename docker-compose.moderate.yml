@@ -1,23 +1,22 @@
 services:
-  submit-service:
-    build:
-      context: ./submit-service
-    container_name: submit_service
+  moderate-service:
+    image: ${MODERATE_IMAGE}
+    container_name: moderate_service
     restart: always
     environment:
-      SUBMIT_SERVICE_PORT: 3200
+      DB_PROFILE: ${DB_PROFILE}
+      MODERATE_SERVICE_PORT: 3100
       TYPES_CACHE_FILE: /app/cache/types-cache.json
       INITIAL_TYPES_FILE: /app/defaults/types-cache.json
       RABBITMQ_URL: amqp://10.10.1.30:5672
       SUBMIT_QUEUE: submit
       MODERATED_QUEUE: moderated
       TYPE_UPDATE_EXCHANGE: type_update
-      SUB_TYPE_UPDATE_QUEUE: sub_type_update
       MOD_TYPE_UPDATE_QUEUE: mod_type_update
     volumes:
-      - submit_cache:/app/cache
+      - moderate_cache:/app/cache
     ports:
-      - "3200:3200"
+      - "3100:3100"
 
 volumes:
-  submit_cache:
+  moderate_cache:

@@ -1,15 +1,10 @@
 services:
   submit-service:
-    build:
-      context: .
-      dockerfile: ./submit-service/Dockerfile
+    image: ${SUBMIT_IMAGE}
     container_name: submit_service
     restart: always
     environment:
-      SUBMIT_SERVICE_DB_HOST: 10.10.1.20
-      SUBMIT_SERVICE_DB_USER: root
-      SUBMIT_SERVICE_DB_PASSWORD: root
-      SUBMIT_SERVICE_DB_NAME: jokes_db
+      DB_PROFILE: ${DB_PROFILE}
       SUBMIT_SERVICE_PORT: 3200
       TYPES_CACHE_FILE: /app/cache/types-cache.json
       INITIAL_TYPES_FILE: /app/defaults/types-cache.json

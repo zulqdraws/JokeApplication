@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="/home/azureuser/jokes-app"
+DB_PROFILE="${1:?DB_PROFILE is required}"
+JOKE_IMAGE="${2:?JOKE image is required}"
+ETL_IMAGE="${3:?ETL image is required}"
+
+if [ "$DB_PROFILE" = "mongo" ]; then
+  DB_PROFILE_UPPER="MONGO"
+  JOKE_SERVICE_DB_HOST=""
+  JOKE_SERVICE_DB_USER=""
+  JOKE_SERVICE_DB_PASSWORD=""
+  JOKE_SERVICE_DB_NAME=""
+  JOKE_SERVICE_MONGO_URL="mongodb://mongo:27017"
+  JOKE_SERVICE_MONGO_DB_NAME="jokes_db"
+
+  ETL_SERVICE_DB_HOST=""
+  ETL_SERVICE_DB_USER=""
+  ETL_SERVICE_DB_PASSWORD=""
+  ETL_SERVICE_DB_NAME=""
+  ETL_SERVICE_MONGO_URL="mongodb://mongo:27017"
+  ETL_SERVICE_MONGO_DB_NAME="jokes_db"
+elif [ "$DB_PROFILE" = "mysql" ]; then
+  DB_PROFILE_UPPER="MYSQL"
+  JOKE_SERVICE_DB_HOST="mysql"
+  JOKE_SERVICE_DB_USER="root"
+  JOKE_SERVICE_DB_PASSWORD="root"
+  JOKE_SERVICE_DB_NAME="jokes_db"
+  JOKE_SERVICE_MONGO_URL=""
+  JOKE_SERVICE_MONGO_DB_NAME=""
+
+  ETL_SERVICE_DB_HOST="mysql"
+  ETL_SERVICE_DB_USER="root"
+  ETL_SERVICE_DB_PASSWORD="root"
+  ETL_SERVICE_DB_NAME="jokes_db"
+  ETL_SERVICE_MONGO_URL=""
+  ETL_SERVICE_MONGO_DB_NAME=""
+else
+  echo "Unsupported DB_PROFILE: $DB_PROFILE"
+  exit 1
+fi
+
+mkdir -p "$APP_DIR"
+cd "$APP_DIR"
+
+cat > .env.deploy <<EOF
+DB_PROFILE=$DB_PROFILE
+DB_PROFILE_UPPER=$DB_PROFILE_UPPER
+COMPOSE_PROFILES=$DB_PROFILE
+JOKE_IMAGE=$JOKE_IMAGE
+ETL_IMAGE=$ETL_IMAGE
+
+JOKE_SERVICE_DB_HOST=$JOKE_SERVICE_DB_HOST
+JOKE_SERVICE_DB_USER=$JOKE_SERVICE_DB_USER
+JOKE_SERVICE_DB_PASSWORD=$JOKE_SERVICE_DB_PASSWORD
+JOKE_SERVICE_DB_NAME=$JOKE_SERVICE_DB_NAME
+JOKE_SERVICE_MONGO_URL=$JOKE_SERVICE_MONGO_URL
+JOKE_SERVICE_MONGO_DB_NAME=$JOKE_SERVICE_MONGO_DB_NAME
+
+ETL_SERVICE_DB_HOST=$ETL_SERVICE_DB_HOST
+ETL_SERVICE_DB_USER=$ETL_SERVICE_DB_USER
+ETL_SERVICE_DB_PASSWORD=$ETL_SERVICE_DB_PASSWORD
+ETL_SERVICE_DB_NAME=$ETL_SERVICE_DB_NAME
+ETL_SERVICE_MONGO_URL=$ETL_SERVICE_MONGO_URL
+ETL_SERVICE_MONGO_DB_NAME=$ETL_SERVICE_MONGO_DB_NAME
+EOF
+
+echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+
+docker compose --env-file .env.deploy -f docker-compose.joke.yml pull
+docker compose --env-file .env.deploy -f docker-compose.joke.yml up -d
+
+docker image prune -af --filter "until=168h" || true
+docker ps
+docker compose --env-file .env.deploy -f docker-compose.joke.yml logs --tail=80

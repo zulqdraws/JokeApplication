@@ -1,0 +1,48 @@
+name: Deploy Kong
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docker-compose.kong.yml"
+      - "kong/**"
+      - "deploy/deploy-kong.sh"
+      - ".github/workflows/deploy-kong.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare SSH key and config
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.KONG_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          cat > ~/.ssh/config <<EOF
+          Host kong
+              HostName ${{ secrets.KONG_HOST }}
+              User ${{ secrets.KONG_USER }}
+              IdentityFile ~/.ssh/id_rsa
+              StrictHostKeyChecking no
+              UserKnownHostsFile /dev/null
+          EOF
+
+      - name: Ensure target directory exists
+        run: ssh kong "mkdir -p /home/azureuser/jokes-app/kong"
+
+      - name: Copy files to Kong VM
+        run: |
+          scp docker-compose.kong.yml kong:/home/azureuser/jokes-app/
+          scp -r kong kong:/home/azureuser/jokes-app/
+          scp deploy/deploy-kong.sh kong:/home/azureuser/jokes-app/
+
+      - name: Run deployment on Kong VM
+        run: |
+          ssh kong "
+            chmod +x /home/azureuser/jokes-app/deploy-kong.sh &&
+            /home/azureuser/jokes-app/deploy-kong.sh
+          "

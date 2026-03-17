@@ -1,13 +1,13 @@
-name: Deploy Moderate Service
+name: Deploy Submit Service
 
 on:
   push:
     branches: [main]
     paths:
-      - "moderate-service/**"
-      - "docker-compose.moderate.yml"
-      - "deploy/deploy-moderate.sh"
-      - ".github/workflows/deploy-moderate.yml"
+      - "submit-service/**"
+      - "docker-compose.submit.yml"
+      - "deploy/deploy-submit.sh"
+      - ".github/workflows/deploy-submit.yml"
   workflow_dispatch:
     inputs:
       db_profile:
@@ -19,14 +19,12 @@ jobs:
   build-push-deploy:
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAME: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/jokes-moderate-service
+      IMAGE_NAME: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/jokes-submit-service
       DB_PROFILE: ${{ github.event.inputs.db_profile || 'mongo' }}
 
     steps:
       - uses: actions/checkout@v4
-
       - uses: docker/setup-buildx-action@v3
-
       - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -34,7 +32,7 @@ jobs:
 
       - name: Build and push image
         run: |
-          docker build -t $IMAGE_NAME:${GITHUB_SHA} -t $IMAGE_NAME:latest ./moderate-service
+          docker build -t $IMAGE_NAME:${GITHUB_SHA} -t $IMAGE_NAME:latest ./submit-service
           docker push $IMAGE_NAME:${GITHUB_SHA}
           docker push $IMAGE_NAME:latest
 
@@ -51,9 +49,9 @@ jobs:
               StrictHostKeyChecking no
               UserKnownHostsFile /dev/null
 
-          Host moderate-vm
-              HostName ${{ secrets.MODERATE_HOST }}
-              User ${{ secrets.MODERATE_USER }}
+          Host submit-vm
+              HostName ${{ secrets.SUBMIT_HOST }}
+              User ${{ secrets.SUBMIT_USER }}
               IdentityFile ~/.ssh/id_rsa
               ProxyJump kong
               StrictHostKeyChecking no
@@ -61,18 +59,18 @@ jobs:
           EOF
 
       - name: Ensure target directory exists
-        run: ssh moderate-vm "mkdir -p /home/azureuser/jokes-app"
+        run: ssh submit-vm "mkdir -p /home/azureuser/jokes-app"
 
-      - name: Copy deployment files to Moderate VM
+      - name: Copy deployment files to Submit VM
         run: |
-          scp docker-compose.moderate.yml moderate-vm:/home/azureuser/jokes-app/
-          scp deploy/deploy-moderate.sh moderate-vm:/home/azureuser/jokes-app/
+          scp docker-compose.submit.yml submit-vm:/home/azureuser/jokes-app/
+          scp deploy/deploy-submit.sh submit-vm:/home/azureuser/jokes-app/
 
-      - name: Run deployment on Moderate VM
+      - name: Run deployment on Submit VM
         run: |
-          ssh moderate-vm "
-            chmod +x /home/azureuser/jokes-app/deploy-moderate.sh &&
+          ssh submit-vm "
+            chmod +x /home/azureuser/jokes-app/deploy-submit.sh &&
             DOCKERHUB_USERNAME='${{ secrets.DOCKERHUB_USERNAME }}' \
             DOCKERHUB_TOKEN='${{ secrets.DOCKERHUB_TOKEN }}' \
-            /home/azureuser/jokes-app/deploy-moderate.sh '${DB_PROFILE}' '$IMAGE_NAME:${GITHUB_SHA}'
+            /home/azureuser/jokes-app/deploy-submit.sh '${DB_PROFILE}' '$IMAGE_NAME:${GITHUB_SHA}'
           "

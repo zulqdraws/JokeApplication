@@ -1,0 +1,54 @@
+name: Deploy RabbitMQ
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docker-compose.rabbitmq.yml"
+      - "deploy/deploy-rabbitmq.sh"
+      - ".github/workflows/deploy-rabbitmq.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare SSH key and config
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.KONG_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          cat > ~/.ssh/config <<EOF
+          Host kong
+              HostName ${{ secrets.KONG_HOST }}
+              User ${{ secrets.KONG_USER }}
+              IdentityFile ~/.ssh/id_rsa
+              StrictHostKeyChecking no
+              UserKnownHostsFile /dev/null
+
+          Host rabbitmq-vm
+              HostName ${{ secrets.RABBITMQ_HOST }}
+              User ${{ secrets.RABBITMQ_USER }}
+              IdentityFile ~/.ssh/id_rsa
+              ProxyJump kong
+              StrictHostKeyChecking no
+              UserKnownHostsFile /dev/null
+          EOF
+
+      - name: Ensure target directory exists
+        run: ssh rabbitmq-vm "mkdir -p /home/azureuser/jokes-app"
+
+      - name: Copy files to RabbitMQ VM
+        run: |
+          scp docker-compose.rabbitmq.yml rabbitmq-vm:/home/azureuser/jokes-app/
+          scp deploy/deploy-rabbitmq.sh rabbitmq-vm:/home/azureuser/jokes-app/
+
+      - name: Run deployment on RabbitMQ VM
+        run: |
+          ssh rabbitmq-vm "
+            chmod +x /home/azureuser/jokes-app/deploy-rabbitmq.sh &&
+            /home/azureuser/jokes-app/deploy-rabbitmq.sh
+          "
