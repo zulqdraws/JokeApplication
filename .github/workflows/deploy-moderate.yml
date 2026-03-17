@@ -1,0 +1,83 @@
+name: Deploy Moderate Service
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "moderate-service/**"
+      - "docker-compose.moderate.mongo.deploy.yml"
+      - "deploy/deploy-moderate.sh"
+      - ".github/workflows/deploy-moderate.yml"
+  workflow_dispatch:
+
+jobs:
+  build-push-deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      IMAGE_NAME: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/jokes-moderate-service
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push image
+        run: |
+          docker build \
+            -t $IMAGE_NAME:${GITHUB_SHA} \
+            -t $IMAGE_NAME:latest \
+            ./moderate-service
+
+          docker push $IMAGE_NAME:${GITHUB_SHA}
+          docker push $IMAGE_NAME:latest
+
+      - name: Prepare SSH key and config
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.KONG_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          cat > ~/.ssh/config <<EOF
+          Host kong
+              HostName ${{ secrets.KONG_HOST }}
+              User ${{ secrets.KONG_USER }}
+              IdentityFile ~/.ssh/id_rsa
+              StrictHostKeyChecking no
+              UserKnownHostsFile /dev/null
+
+          Host moderate-vm
+              HostName ${{ secrets.MODERATE_HOST }}
+              User ${{ secrets.MODERATE_USER }}
+              IdentityFile ~/.ssh/id_rsa
+              ProxyJump kong
+              StrictHostKeyChecking no
+              UserKnownHostsFile /dev/null
+          EOF
+
+      - name: Ensure target directory exists
+        run: |
+          ssh moderate-vm "mkdir -p /home/azureuser/jokes-app"
+
+      - name: Copy deployment files to Moderate VM
+        run: |
+          scp docker-compose.moderate.mongo.deploy.yml moderate-vm:/home/azureuser/jokes-app/
+          scp deploy/deploy-moderate.sh moderate-vm:/home/azureuser/jokes-app/
+
+      - name: Run deployment on Moderate VM
+        run: |
+          ssh moderate-vm "
+            chmod +x /home/azureuser/jokes-app/deploy-moderate.sh &&
+            DOCKERHUB_USERNAME='${{ secrets.DOCKERHUB_USERNAME }}' \
+            DOCKERHUB_TOKEN='${{ secrets.DOCKERHUB_TOKEN }}' \
+            /home/azureuser/jokes-app/deploy-moderate.sh $IMAGE_NAME:${GITHUB_SHA}
+          "
