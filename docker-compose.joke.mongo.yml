@@ -17,8 +17,7 @@ services:
 
   joke-service:
     build:
-      context: .
-      dockerfile: ./joke-service/Dockerfile
+      context: ./joke-service
     container_name: joke_service
     restart: always
     depends_on:
@@ -34,8 +33,7 @@ services:
 
   etl-service:
     build:
-      context: .
-      dockerfile: ./etl-service/Dockerfile
+      context: ./etl-service
     container_name: etl_service
     restart: always
     depends_on:

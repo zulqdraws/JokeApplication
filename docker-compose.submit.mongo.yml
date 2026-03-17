@@ -1,8 +1,7 @@
 services:
   submit-service:
     build:
-      context: .
-      dockerfile: ./submit-service/Dockerfile
+      context: ./submit-service
     container_name: submit_service
     restart: always
     environment:

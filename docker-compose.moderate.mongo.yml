@@ -1,8 +1,7 @@
 services:
   moderate-service:
     build:
-      context: .
-      dockerfile: ./moderate-service/Dockerfile
+      context: ./moderate-service
     container_name: moderate_service
     restart: always
     environment:
