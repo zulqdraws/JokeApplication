@@ -10,7 +10,7 @@ const options = {
     },
     servers: [
       {
-        url: "http://localhost:8445",
+        url: "https://zulq-jokes-kong.centralindia.cloudapp.azure.com/",
       },
     ],
   },
