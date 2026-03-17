@@ -27,61 +27,86 @@
     </div>
 
     <script>
-      async function loadTypes() {
-        try {
-          const res = await fetch("/types");
-          const types = await res.json();
+  function showError(message) {
+    document.getElementById("setup").textContent = message;
+    document.getElementById("punchline").textContent = "";
+  }
 
-          const select = document.getElementById("typeSelect");
-          select.innerHTML = "";
+  async function loadTypes() {
+    try {
+      const res = await fetch("/types");
 
-          const anyOption = document.createElement("option");
-          anyOption.value = "any";
-          anyOption.textContent = "Any";
-          select.appendChild(anyOption);
-
-          types.forEach((t) => {
-            const option = document.createElement("option");
-            option.value = t.name;
-            option.textContent = t.name;
-            select.appendChild(option);
-          });
-        } catch (err) {
-          console.error("Failed to load types:", err);
-        }
+      if (res.status === 429) {
+        console.warn("Rate limit hit on /types");
+        return; // keep existing cached options if any
       }
 
-      async function getJoke() {
-        try {
-          const type = document.getElementById("typeSelect").value;
-
-          const res = await fetch(`/joke/${type}`);
-          const data = await res.json();
-
-          if (!Array.isArray(data) || data.length === 0) {
-            document.getElementById("setup").textContent = "No joke found.";
-            document.getElementById("punchline").textContent = "";
-            return;
-          }
-
-          const joke = data[0];
-
-          document.getElementById("setup").textContent = joke.setup || "";
-          document.getElementById("punchline").textContent = "";
-
-          setTimeout(() => {
-            document.getElementById("punchline").textContent = joke.punchline || "";
-          }, 3000);
-        } catch (err) {
-          console.error("Failed to fetch joke:", err);
-          document.getElementById("setup").textContent = "Failed to load joke.";
-          document.getElementById("punchline").textContent = "";
-        }
+      if (!res.ok) {
+        throw new Error("Failed to fetch types");
       }
 
-      document.getElementById("jokeBtn").addEventListener("click", getJoke);
+      const types = await res.json();
 
-      loadTypes();
-    </script>
+      const select = document.getElementById("typeSelect");
+      select.innerHTML = "";
+
+      const anyOption = document.createElement("option");
+      anyOption.value = "any";
+      anyOption.textContent = "Any";
+      select.appendChild(anyOption);
+
+      types.forEach((t) => {
+        const option = document.createElement("option");
+        option.value = t.name;
+        option.textContent = t.name;
+        select.appendChild(option);
+      });
+    } catch (err) {
+      console.error("Failed to load types:", err);
+      showError("Unable to load joke types.");
+    }
+  }
+
+  async function getJoke() {
+    try {
+      const type = document.getElementById("typeSelect").value;
+
+      const res = await fetch(`/joke/${type}`);
+
+      if (res.status === 429) {
+        showError("Rate limit reached. Please wait a few seconds and try again.");
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch joke");
+      }
+
+      const data = await res.json();
+
+      if (!Array.isArray(data) || data.length === 0) {
+        showError("No joke found.");
+        return;
+      }
+
+      const joke = data[0];
+
+      document.getElementById("setup").textContent = joke.setup || "";
+      document.getElementById("punchline").textContent = "";
+
+      setTimeout(() => {
+        document.getElementById("punchline").textContent = joke.punchline || "";
+      }, 3000);
+
+    } catch (err) {
+      console.error("Failed to fetch joke:", err);
+      showError("Failed to load joke.");
+    }
+  }
+
+  document.getElementById("jokeBtn").addEventListener("click", getJoke);
+
+  loadTypes();
+</script>
   </body>
 </html>
